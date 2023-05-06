@@ -1,0 +1,24 @@
+{
+    "images": {
+        "platypus01.jpeg": {
+            "source": "https://animals.sandiegozoo.org/animals/platypus",
+            "attribution": "https://animals.sandiegozoo.org/animals/platypus"
+        },
+        "platypus02.jpeg": {
+            "source": "https://www.britannica.com/animal/platypus",
+            "attribution": "https://www.britannica.com/animal/platypus"
+        },
+        "platypus03.jpeg": {
+            "source": "https://otwaylifemagazine.wordpress.com/2014/06/05/the-platypus-unofficial-emblem-of-forrest/",
+            "attribution": "https://otwaylifemagazine.wordpress.com/2014/06/05/the-platypus-unofficial-emblem-of-forrest/"
+        },
+        "platypus04.jpeg": {
+            "source": "https://focusingonwildlife.com/news/platypus-milk-unlikely-weapon-in-fight-against-superbugs/",
+            "attribution": "Hans and Judy Besage - Mary Evans Picture Library Ltd/age fotostock"
+        },
+        "platypus05.jpeg": {
+            "source": "https://carinbondar.ca/platypus-mothers/",
+            "attribution": "Adobe Stock"
+        }
+    }
+}

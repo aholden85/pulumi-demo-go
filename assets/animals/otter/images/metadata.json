@@ -1,0 +1,27 @@
+{
+    "images": {
+        "otters01.png": {
+            "source": "https://unsplash.com/photos/X9cBHEPO6LU",
+            "description:": "Three sea otters playing in Gulf of Alaska, North Pacific Ocean in Kenai Fjords, Alaska",
+            "attribution": "https://unsplash.com/@kedar9"
+        },
+        "otters02.png": {
+            "source": "https://unsplash.com/photos/axqTLZ12Jss",
+            "attribution": "https://unsplash.com/@mana5280"
+        },
+        "otters03.png": {
+            "source": "https://unsplash.com/photos/-2NXf31qalc",
+            "attribution": "https://unsplash.com/@byeduck"
+        },
+        "otters04.png": {
+            "source": "https://unsplash.com/photos/0yaKFO-_GJM",
+            "description": "Otter playing at Dartmoor Otter Sanctuary",
+            "attribution": "https://unsplash.com/@raymondo600"
+        },
+        "otters05.png": {
+            "source": "https://unsplash.com/photos/_R1HgozoSsc",
+            "description": "Kissing Otters",
+            "attribution": "https://unsplash.com/@buddhapixel"
+        }
+    }
+}
