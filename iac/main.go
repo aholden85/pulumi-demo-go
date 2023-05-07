@@ -532,7 +532,7 @@ func addFolderContentsToS3(ctx *pulumi.Context, directory string, s3Bucket *s3.B
 						parentFolderPath,
 					) + file.Name(),
 				),
-				Source: pulumi.NewFileAsset(path.Join(animalImageFolderPath, file.Name()),
+				Source: pulumi.NewFileAsset(path.Join(animalImageFolderPath, file.Name())),
 				Tags:   objectTags,
 			},
 		)
