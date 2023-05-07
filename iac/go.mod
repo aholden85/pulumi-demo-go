@@ -1,4 +1,4 @@
-module pulumi-golang-api
+module pulumi-demo-go
 
 go 1.18
 

@@ -101,7 +101,7 @@ func copyAssets() {
 	// This is done because the assets are contained in a different directory
 	// to the IaC code:
 	//
-	//	pulumi-golang-api
+	//	pulumi-demo-go
 	//	├─  assets
 	//	└─  iac
 	//

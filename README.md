@@ -59,6 +59,7 @@ export AWS_REGION=us-east-1
 export AWS_PROFILE=your-aws-profile
 ```
 
+# TODO: Add `pulumi config set` instructions (https://www.pulumi.com/registry/packages/aws/installation-configuration/)
 Alternatively, you can edit the `iac/Pulumi.dev.yaml` file to include the following lines under the `config:` header:
 ```yaml
   aws:region: us-east-1
@@ -67,10 +68,10 @@ Alternatively, you can edit the `iac/Pulumi.dev.yaml` file to include the follow
 
 # Repo Structure
 The repository contains two key folders:
-- `iac`: this folder contains all of the Pulumi-specific code for deploying, and testing, the AWS resouces.
 - `assets`: this folder contains all of the animal facts and images, and the code for the Lambda functions that will service API requests hitting the API Gateway.
+- `iac`: this folder contains all of the Pulumi-specific code for deploying, and testing, the AWS resouces.
 
-## Structure Diagram
+## Folder Structure Diagram
 ```
 	pulumi-demo-go
 	├─  assets
@@ -100,34 +101,53 @@ This project will deploy the following resources into the target AWS account:
 	- `1x` API Gateway RestAPI
 	- `1x` API Gateway Stage
 
+# Utilisation of `Makefile`s
+There are several `Makefile`s as part of this project:
+- Each Lambda function has a `Makefile` that compiles the Go code and compresses it as a `.zip` file, ready to be deployed.
+- The Pulumi code has a `Makefile` for `deploy`, `destroy` and `test` purposes.
+  - Executing `make` from the `iac` folder will run the `integration` and `unit` tests before executing a `pulumi up` command.
+
 # Testing
+Using a combination of `go test` and Pulumi's testing framework, I have implemented **unit** and **integration** testing. **Property** testing is also possible, but has not been implemented at this stage.
 
 ## Integration Tests
+Integration Tests deploy ephemeral infrastructure and run external tests against it. The implemented integration tests will ensure that the program compiles properly, and that the resource types and counts are correct.
+
 The integration tests are included in the [integration_test.go](/iac/integration_test.go) file.
 
-Integration tests will ensure that the program compiles properly, and that the resource count is correct. You can update these tests/resource counts within the [integration_test.go](/iac/integration_test.go) file.
+These tests can be executed using the following `Makefile` command:
+```bash
+make test-integration
+```
 
-They can be executed using the following command:
+Alternatively, they  can be executed using the following `go test` command:
 ```bash
 go test -tags=integration
 ```
 
 ## Unit Tests
+Unit Tests are fast in-memory tests that mock all external calls. The implemented unit tests will ensure that all resources have a lower-case name. 
+
 The unit tests are included in the [unit_test.go](/iac/unit_test.go) file.
 
-Unit tests will ensure that all resources have a lower-case name. You can update these tests within the [unit_test.go](/iac/unit_test.go) file.
+These tests can be executed using the following `Makefile` command:
+```bash
+make test-unit
+```
 
-They can be executed using the following command:
+Alternatively, they can be executed using the following `go test` command:
 ```bash
 go test -tags=unit
 ```
 
 
 # Deploying
+If you've followed the instrutions above, you should be ready to deploy! To test and deploy the infrastructure, execute the `Makefile` from within the `iac` folder in the project:
+```bash
+make
+```
 
-## `pulumi up`
-If you've followed the instrutions above, you should be ready to deploy! Execute the command below from within the `iac` folder in the project to deploy the configured resources:
-
+Alternatively, you can execute the following `pulumi` command:
 ```bash
 pulumi up
 ```
@@ -216,14 +236,14 @@ Resources:
 Duration: 1m12s
 ```
 
-# Validation
+## Validation
 You'll be able to query your APIs using the following endpoints:
 
-## Facts
+### Facts
 
 To retrieve a random fact, query `<output_url>/facts` with a `GET`
 
 To retrieve a specific fact, query `<output_url>/facts?FactId=1` with a `GET`
 
-## Images
+### Images
 To retrieve a random image, query, `<output_url>/images` with a `GET`

@@ -84,12 +84,12 @@ func initStrings(ctx *pulumi.Context) {
 	conf := config.New(ctx, "")
 	animalName = conf.Require("animal")
 	acronym = fmt.Sprintf("%caas", animalName[0])
-	animalAssetFolderPath = fmt.Sprintf("%s/animals/%s", assetFolderPath, animalName)
-	animalImageFolderPath = fmt.Sprintf("%s/images/", animalAssetFolderPath)
+	animalAssetFolderPath = path.Join(assetFolderPath, "animals", animalName)
+	animalImageFolderPath = path.Join(animalAssetFolderPath, "images")
 	imageMetadataFile = "metadata.json"
-	imageMetadataPath = fmt.Sprintf("%s/%s", animalImageFolderPath, imageMetadataFile)
-	factFile = fmt.Sprintf("%s/facts.txt", animalAssetFolderPath)
-	lambdaFolder = fmt.Sprintf("%s/lambda", assetFolderPath)
+	imageMetadataPath = path.Join(animalImageFolderPath, imageMetadataFile)
+	factFile = path.Join(animalAssetFolderPath, "facts.txt")
+	lambdaFolder = path.Join(assetFolderPath, "lambda")
 	lambdaZipSuffix = "bin/main.zip"
 }
 
@@ -189,7 +189,7 @@ func deployPublicBucket(ctx *pulumi.Context, bucketName string) (*s3.Bucket, err
 
 func compileLambda(module string) error {
 	// Build and zip the code
-	cmd := exec.Command("make", "build")
+	cmd := exec.Command("make")
 	cmd.Dir = fmt.Sprintf("%s/%s", lambdaFolder, module)
 	_, err := cmd.Output()
 	if err != nil {
@@ -288,7 +288,7 @@ func deployLambdaFunction(
 			Role:    role.Arn,
 			Runtime: pulumi.String("go1.x"),
 			Code: pulumi.NewFileArchive(
-				fmt.Sprintf("%s/%s/%s", lambdaFolder, lambdaName, lambdaZipSuffix),
+				path.Join(lambdaFolder, lambdaName, lambdaZipSuffix),
 			),
 			Environment: &lambda.FunctionEnvironmentArgs{
 				Variables: envVars,
@@ -532,7 +532,7 @@ func addFolderContentsToS3(ctx *pulumi.Context, directory string, s3Bucket *s3.B
 						parentFolderPath,
 					) + file.Name(),
 				),
-				Source: pulumi.NewFileAsset(animalImageFolderPath + file.Name()),
+				Source: pulumi.NewFileAsset(path.Join(animalImageFolderPath, file.Name())),
 				Tags:   objectTags,
 			},
 		)
@@ -647,7 +647,10 @@ func createInfrastructure(ctx *pulumi.Context) (*Infrastructure, error) {
 
 func main() {
 	pulumi.Run(func(ctx *pulumi.Context) error {
-		createInfrastructure(ctx)
+		_, err := createInfrastructure(ctx)
+		if err != nil {
+			return err
+		}
 		return nil
 	})
 }
