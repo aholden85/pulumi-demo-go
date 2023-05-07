@@ -13,7 +13,7 @@ You'll need to perform a few basic steps to configure your workspace in order to
 ## Clone This Repo
 
 ```bash
-git clone git@github.com.au/aholden85/pulumi-demo-go.git
+git clone git@github.com:aholden85/pulumi-demo-go.git
 ```
 
 ## Download/Install Homebrew
