@@ -55,14 +55,19 @@ This project, specifically, is currently targeting AWS. To deploy it, you will n
 
 You can configure these as environment variables, using the commands below:
 ```bash
-export AWS_REGION=us-east-1
+export AWS_REGION=your-aws-region
 export AWS_PROFILE=your-aws-profile
 ```
 
-# TODO: Add `pulumi config set` instructions (https://www.pulumi.com/registry/packages/aws/installation-configuration/)
-Alternatively, you can edit the `iac/Pulumi.dev.yaml` file to include the following lines under the `config:` header:
+Alternatively, you can use `pulumi config set` to add AWS-specific variables, as shown below:
+```bash
+pulumi configure set aws:region your-aws-region
+pulumi configure set aws:profile your-aws-profile
+```
+
+You can also edit the `iac/Pulumi.dev.yaml` file directly to include the following lines under the `config:` header:
 ```yaml
-  aws:region: us-east-1
+  aws:region: your-aws-region
   aws:profile: your-aws-profile
 ```
 
