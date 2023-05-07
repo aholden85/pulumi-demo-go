@@ -4,6 +4,9 @@ The purpose of this repo, originally, was to teach myself how to do a few things
 - Use Pulumi to deploy cloud resources
 - Deploy a simple API
 
+# TL;DR
+If you've got Homebrew and Pulumi installed, just clone the repo and run `make` to test and deploy the infrastructure.
+
 # Before You Begin
 You'll need to perform a few basic steps to configure your workspace in order to work with this repo.
 
