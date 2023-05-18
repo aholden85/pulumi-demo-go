@@ -53,7 +53,9 @@ func getPaths() []string {
 }
 
 // This currently isn't required as the test packages are part of the
-// IaC module. We'll need to uncomment this if/when that changes.
+// IaC module, where the Fact struct is already defined. We will need
+// to uncomment this if/when that changes.
+//
 // type Fact struct {
 // 	FactId	int 	`dynamodbav:"FactId" json:"id"`
 // 	Text	string	`dynamodbav:"Text" json:"text"`
@@ -187,13 +189,13 @@ func validateResourceCounts(t *testing.T, stack integration.RuntimeValidationSta
 		"aws:apigateway/deployment:Deployment":                   1,
 		"aws:apigateway/restApi:RestApi":                         1,
 		"aws:apigateway/stage:Stage":                             1,
-		"aws:dynamodb/table:Table":                               1,
+		"aws:dynamodb/table:Table":                               2,
 		"aws:dynamodb/tableItem:TableItem":                       dynamicCountPlaceholder,
-		"aws:iam/role:Role":                                      2,
-		"aws:iam/rolePolicy:RolePolicy":                          2,
-		"aws:iam/rolePolicyAttachment:RolePolicyAttachment":      2,
-		"aws:lambda/function:Function":                           2,
-		"aws:lambda/permission:Permission":                       2,
+		"aws:iam/role:Role":                                      3,
+		"aws:iam/rolePolicy:RolePolicy":                          3,
+		"aws:iam/rolePolicyAttachment:RolePolicyAttachment":      3,
+		"aws:lambda/function:Function":                           3,
+		"aws:lambda/permission:Permission":                       3,
 		"aws:s3/bucket:Bucket":                                   1,
 		"aws:s3/bucketObject:BucketObject":                       dynamicCountPlaceholder,
 		"aws:s3/bucketPolicy:BucketPolicy":                       1,
@@ -247,7 +249,8 @@ func validateResourceCounts(t *testing.T, stack integration.RuntimeValidationSta
 		resourceCountSummary := "\n" +
 			"\tYou will need to update the 'expectedResourceCounts' map in the\n" +
 			"\t'integration_test.go' file. Please review the summary below and\n" +
-			"\tthe differences between the expected/actual counts of each resource:\n" +
+			"\tthe differences between the expected/actual counts of each\n" +
+			"\tresource:\n" +
 			"\n" +
 			fmt.Sprintf("+%s", strings.Repeat("-", 17)) +
 			fmt.Sprintf("+%s+\n", strings.Repeat("-", 73)) +
@@ -287,14 +290,22 @@ func validateResourceCounts(t *testing.T, stack integration.RuntimeValidationSta
 }
 
 func runtimeValidation(t *testing.T, stack integration.RuntimeValidationStackInfo) {
+	fmt.Printf("\tCOMPLETE\n")
+	fmt.Printf("\tValidating that the expected number of resources will be created...")
 	validateResourceCounts(t, stack)
+	fmt.Printf("\tCOMPLETE\n")
 }
 
 func TestIntegration(t *testing.T) {
+	fmt.Printf("Executing ~INTEGRATION~ tests...\n")
 	// Copy the asset folder so we can test their integration
+	fmt.Printf("\tCopying asset folder and contents...")
 	copyAssets()
+	fmt.Printf("\tCOMPLETE\n")
 
 	currentWorkingDirectory, _ := os.Getwd()
+
+	fmt.Printf("\tVerifying that the Pulumi code compiles correctly...")
 
 	integration.ProgramTest(t, &integration.ProgramTestOptions{
 		Quick:                  true,
@@ -305,5 +316,7 @@ func TestIntegration(t *testing.T) {
 	})
 
 	// Clean up the copied asset folder
+	fmt.Printf("\tRemoving copied asset folder and contents...")
 	removeAssets()
+	fmt.Printf("\tCOMPLETE\n")
 }

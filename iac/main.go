@@ -9,7 +9,6 @@ import (
 	"os/exec"
 	"path"
 	"strings"
-	// "reflect"
 
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi/config"
@@ -94,11 +93,242 @@ func initStrings(ctx *pulumi.Context) {
 }
 
 // As we can't declare const arrays, we use the functions below.
-func getLambdaNames() []string {
-	return []string{
-		"facts",
-		"images",
+func getLambdaDetails() map[string]func(ctx *pulumi.Context) (LambdaInfra, error) {
+	return map[string]func(ctx *pulumi.Context) (LambdaInfra, error){
+		"facts":  createLambdaFacts,
+		"images": createLambdaImages,
+		"pats":   createLambdaPats,
 	}
+}
+
+func createLambdaFacts(ctx *pulumi.Context) (LambdaInfra, error) {
+	bucket, err := deployPublicBucket(
+		ctx,
+		fmt.Sprintf("%s-s3-assets", acronym),
+	)
+	if err != nil {
+		return LambdaInfra{}, err
+	}
+
+	// Deploy the images in the image folder to the S3 bucket
+	err = addFolderContentsToS3(ctx, animalImageFolderPath, bucket)
+	if err != nil {
+		return LambdaInfra{}, err
+	}
+
+	// Create a list of IAM policies required by the "images" lambda.
+	// Specifically, we need to be able to read
+	policies := []RolePolicy{
+		{
+			NameSuffix: "s3-read-policy",
+			Document: pulumi.Sprintf(
+				`{
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Sid": "DescribeImagesBucket",
+							"Effect": "Allow",
+							"Action": [
+								"s3:GetBucketLocation",
+								"s3:GetObject",
+								"s3:GetObjectTagging",
+								"s3:ListBucket"
+							],
+							"Resource": [
+								"%s/*",
+								"%s"
+							]
+						}
+					]
+				}`,
+				bucket.Arn,
+				bucket.Arn,
+			),
+		},
+	}
+
+	functionInfra, err := deployLambdaFunction(
+		ctx,
+		"images",
+		policies,
+		pulumi.StringMap{
+			"IMAGES_BUCKET_NAME": bucket.Bucket,
+			"IMAGES_OBJECT_PREFIX": pulumi.String(
+				strings.TrimPrefix(
+					animalImageFolderPath,
+					parentFolderPath,
+				),
+			),
+		},
+		[]LambdaRoute{
+			{
+				Path:   "/images",
+				Method: apigateway.MethodGET,
+			},
+		},
+	)
+	if err != nil {
+		return LambdaInfra{}, err
+	}
+
+	return functionInfra, nil
+}
+
+func createLambdaImages(ctx *pulumi.Context) (LambdaInfra, error) {
+	// Create a DynamoDB table
+	ddbTable, err := dynamodb.NewTable(
+		ctx,
+		fmt.Sprintf("%s-ddb-facts", acronym),
+		&dynamodb.TableArgs{
+			Attributes: dynamodb.TableAttributeArray{
+				&dynamodb.TableAttributeArgs{
+					Name: pulumi.String("FactId"),
+					Type: pulumi.String("N"),
+				},
+			},
+			HashKey:       pulumi.String("FactId"),
+			BillingMode:   pulumi.String("PROVISIONED"),
+			ReadCapacity:  pulumi.Int(10),
+			WriteCapacity: pulumi.Int(10),
+		},
+	)
+	if err != nil {
+		return LambdaInfra{}, err
+	}
+
+	// Add the resource to createdInfrastructure for testing purposes.
+	createdInfrastructure.DdbTables = append(
+		createdInfrastructure.DdbTables,
+		ddbTable,
+	)
+
+	// Deploy the facts to the DynamoDB table
+	err = addTextContentsToDdb(ctx, factFile, ddbTable)
+	if err != nil {
+		return LambdaInfra{}, err
+	}
+
+	policies := []RolePolicy{
+		{
+			NameSuffix: "ddb-read-policy",
+			Document: pulumi.Sprintf(
+				`{
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Sid": "DescribeQueryScanFactsTable",
+							"Effect": "Allow",
+							"Action": [
+								"dynamodb:DescribeTable",
+								"dynamodb:GetItem",
+								"dynamodb:Query",
+								"dynamodb:Scan"
+							],
+							"Resource": "%s"
+						}
+					]
+				}`,
+				ddbTable.Arn,
+			),
+		},
+	}
+
+	functionInfra, err := deployLambdaFunction(
+		ctx,
+		"facts",
+		policies,
+		pulumi.StringMap{
+			"FACTS_TABLE_NAME": ddbTable.Name,
+		},
+		[]LambdaRoute{
+			{
+				Path:   "/facts",
+				Method: apigateway.MethodGET,
+			},
+		},
+	)
+	if err != nil {
+		return LambdaInfra{}, err
+	}
+
+	return functionInfra, nil
+}
+
+func createLambdaPats(ctx *pulumi.Context) (LambdaInfra, error) {
+	// Create a DynamoDB table
+	ddbTable, err := dynamodb.NewTable(
+		ctx,
+		fmt.Sprintf("%s-ddb-pats", acronym),
+		&dynamodb.TableArgs{
+			Attributes: dynamodb.TableAttributeArray{
+				&dynamodb.TableAttributeArgs{
+					Name: pulumi.String("Pat"),
+					Type: pulumi.String("S"),
+				},
+			},
+			HashKey:       pulumi.String("Pat"),
+			BillingMode:   pulumi.String("PROVISIONED"),
+			ReadCapacity:  pulumi.Int(10),
+			WriteCapacity: pulumi.Int(10),
+		},
+	)
+	if err != nil {
+		return LambdaInfra{}, err
+	}
+
+	// Add the resource to createdInfrastructure for testing purposes.
+	createdInfrastructure.DdbTables = append(
+		createdInfrastructure.DdbTables,
+		ddbTable,
+	)
+
+	policies := []RolePolicy{
+		{
+			NameSuffix: "ddb-read-policy",
+			Document: pulumi.Sprintf(
+				`{
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Sid": "DescribeQueryScanFactsTable",
+							"Effect": "Allow",
+							"Action": [
+								"dynamodb:DeleteItem",
+								"dynamodb:DescribeTable",
+								"dynamodb:GetItem",
+								"dynamodb:PutItem",
+								"dynamodb:Query",
+								"dynamodb:Scan"
+							],
+							"Resource": "%s"
+						}
+					]
+				}`,
+				ddbTable.Arn,
+			),
+		},
+	}
+
+	functionInfra, err := deployLambdaFunction(
+		ctx,
+		"pats",
+		policies,
+		pulumi.StringMap{
+			"ACRONYM":        pulumi.String(acronym),
+			"PAT_TABLE_NAME": ddbTable.Name,
+		},
+		[]LambdaRoute{
+			{
+				Path:   "/pats",
+				Method: apigateway.MethodPOST,
+			},
+		},
+	)
+	if err != nil {
+		return LambdaInfra{}, err
+	}
+
+	return functionInfra, nil
 }
 
 // func getCurrentAccountId(ctx *pulumi.Context) (string, error) {
@@ -187,10 +417,10 @@ func deployPublicBucket(ctx *pulumi.Context, bucketName string) (*s3.Bucket, err
 	return bucket, nil
 }
 
-func compileLambda(module string) error {
+func compileLambdas() error {
 	// Build and zip the code
 	cmd := exec.Command("make")
-	cmd.Dir = fmt.Sprintf("%s/%s", lambdaFolder, module)
+	cmd.Dir = lambdaFolder
 	_, err := cmd.Output()
 	if err != nil {
 		return err
@@ -247,12 +477,6 @@ func deployLambdaFunction(
 			),
 		},
 	)
-	if err != nil {
-		return LambdaInfra{}, err
-	}
-
-	// Compile the Lambda code
-	err = compileLambda(lambdaName)
 	if err != nil {
 		return LambdaInfra{}, err
 	}
@@ -325,165 +549,6 @@ func deployLambdaFunction(
 		Routes: apiGwRoutes,
 	}
 	return infra, nil
-}
-
-func deployLambdaStack(ctx *pulumi.Context, lambdaName string) (LambdaInfra, error) {
-	switch lambdaName {
-	case "images":
-		bucket, err := deployPublicBucket(
-			ctx,
-			fmt.Sprintf("%s-s3-assets", acronym),
-		)
-		if err != nil {
-			return LambdaInfra{}, err
-		}
-
-		// Deploy the images in the image folder to the S3 bucket
-		err = addFolderContentsToS3(ctx, animalImageFolderPath, bucket)
-		if err != nil {
-			return LambdaInfra{}, err
-		}
-
-		// Create a list of IAM policies required by the "images" lambda.
-		// Specifically, we need to be able to read
-		policies := []RolePolicy{
-			{
-				NameSuffix: "s3-read-policy",
-				Document: pulumi.Sprintf(
-					`{
-						"Version": "2012-10-17",
-						"Statement": [
-							{
-								"Sid": "DescribeImagesBucket",
-								"Effect": "Allow",
-								"Action": [
-									"s3:GetBucketLocation",
-									"s3:GetObject",
-									"s3:GetObjectTagging",
-									"s3:ListBucket"
-								],
-								"Resource": [
-									"%s/*",
-									"%s"
-								]
-							}
-						]
-					}`,
-					bucket.Arn,
-					bucket.Arn,
-				),
-			},
-		}
-
-		functionInfra, err := deployLambdaFunction(
-			ctx,
-			"images",
-			policies,
-			pulumi.StringMap{
-				"IMAGES_BUCKET_NAME": bucket.Bucket,
-				"IMAGES_OBJECT_PREFIX": pulumi.String(
-					strings.TrimPrefix(
-						animalImageFolderPath,
-						parentFolderPath,
-					),
-				),
-			},
-			[]LambdaRoute{
-				{
-					Path:   "/images",
-					Method: apigateway.MethodGET,
-				},
-			},
-		)
-		if err != nil {
-			return LambdaInfra{}, err
-		}
-
-		return functionInfra, nil
-	case "facts":
-		// Create a DynamoDB table
-		ddbTable, err := dynamodb.NewTable(
-			ctx,
-			fmt.Sprintf("%s-ddb-facts", acronym),
-			&dynamodb.TableArgs{
-				Attributes: dynamodb.TableAttributeArray{
-					&dynamodb.TableAttributeArgs{
-						Name: pulumi.String("FactId"),
-						Type: pulumi.String("N"),
-					},
-				},
-				HashKey:       pulumi.String("FactId"),
-				BillingMode:   pulumi.String("PROVISIONED"),
-				ReadCapacity:  pulumi.Int(10),
-				WriteCapacity: pulumi.Int(10),
-			},
-		)
-		if err != nil {
-			return LambdaInfra{}, err
-		}
-
-		// Add the resource to createdInfrastructure for testing purposes.
-		createdInfrastructure.DdbTables = append(
-			createdInfrastructure.DdbTables,
-			ddbTable,
-		)
-
-		// Deploy the facts to the DynamoDB table
-		err = addTextContentsToDdb(ctx, factFile, ddbTable)
-		if err != nil {
-			return LambdaInfra{}, err
-		}
-
-		policies := []RolePolicy{
-			{
-				NameSuffix: "ddb-read-policy",
-				Document: pulumi.Sprintf(
-					`{
-						"Version": "2012-10-17",
-						"Statement": [
-							{
-								"Sid": "DescribeQueryScanFactsTable",
-								"Effect": "Allow",
-								"Action": [
-									"dynamodb:DescribeTable",
-									"dynamodb:Query",
-									"dynamodb:Scan",
-									"dynamodb:GetItem"
-								],
-								"Resource": "%s"
-							}
-						]
-					}`,
-					ddbTable.Arn,
-				),
-			},
-		}
-
-		functionInfra, err := deployLambdaFunction(
-			ctx,
-			"facts",
-			policies,
-			pulumi.StringMap{
-				"FACTS_TABLE_NAME": ddbTable.Name,
-			},
-			[]LambdaRoute{
-				{
-					Path:   "/facts",
-					Method: apigateway.MethodGET,
-				},
-			},
-		)
-		if err != nil {
-			return LambdaInfra{}, err
-		}
-
-		return functionInfra, nil
-	default:
-		return LambdaInfra{}, fmt.Errorf(
-			"undefined lambdaName passed to deployLambdaStack(): '%s'",
-			lambdaName,
-		)
-	}
 }
 
 func addFolderContentsToS3(ctx *pulumi.Context, directory string, s3Bucket *s3.Bucket) error {
@@ -603,11 +668,17 @@ func createInfrastructure(ctx *pulumi.Context) (*Infrastructure, error) {
 	// Initialise paths and naming strings
 	initStrings(ctx)
 
+	// Compile the Lambda functions
+	err := compileLambdas()
+	if err != nil {
+		return nil, err
+	}
+
 	// Create each of the Lambda functions and required resources
 	lambdaFunctions := make([]LambdaInfra, 0)
-	for _, lambdaName := range getLambdaNames() {
-		// Deploy the Lambda function and retrieve required details
-		functionInfra, err := deployLambdaStack(ctx, lambdaName)
+	for lambdaNameNEW := range getLambdaDetails() {
+		funct := getLambdaDetails()[lambdaNameNEW]
+		functionInfra, err := funct(ctx)
 		if err != nil {
 			return nil, err
 		}

@@ -17,11 +17,11 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
-const bucketNameEnvVar = "IMAGES_BUCKET_NAME"
-const bucketNameDefault = "xaas-api-assets"
-const objectKeyPrefixEnvVar = "IMAGES_OBJECT_PREFIX"
-const objectKeyPrefixDefault = "animals/animal/images/"
-const objectPublicUrlTemplate = "https://%s.s3.amazonaws.com/%s"
+const bucketNameEnvVar = string("IMAGES_BUCKET_NAME")
+const bucketNameDefault = string("xaas-api-assets")
+const objectKeyPrefixEnvVar = string("IMAGES_OBJECT_PREFIX")
+const objectKeyPrefixDefault = string("animals/animal/images/")
+const objectPublicUrlTemplate = string("https://%s.s3.amazonaws.com/%s")
 
 var s3Client s3.Client
 

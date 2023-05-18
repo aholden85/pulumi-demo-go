@@ -13,10 +13,8 @@ test: test-integration test-unit
 
 .PHONY: test-integration
 test-integration:
-	@echo "Executing integration tests"
 	@go test -tags=integration
 
 .PHONY: test-unit
 test-unit:
-	@echo "Executing unit tests"
 	@go test -tags=unit

@@ -30,6 +30,7 @@ func (mocks) Call(args pulumi.MockCallArgs) (resource.PropertyMap, error) {
 // Applying unit tests.
 func TestInfrastructure(t *testing.T) {
 	err := pulumi.RunErr(func(ctx *pulumi.Context) error {
+		fmt.Printf("Executing ~UNIT~ tests...\n")
 		infra, err := createInfrastructure(ctx)
 		if err != nil {
 			fmt.Print("Couldn't create infra")
@@ -38,7 +39,9 @@ func TestInfrastructure(t *testing.T) {
 		var wg sync.WaitGroup
 		wg.Add(1)
 
-        // TODO(check 1): Resources have lower-case names (only [a-z-])
+		// TODO(check 1): Resources have lower-case names (only [a-z-])
+		fmt.Printf("\tVerifying that the resources are named correctly...")
+
 		for _, res := range infra.DdbTableItems {
 			pulumi.All(res.ID()).ApplyT(func(all []interface{}) error {
 				id := fmt.Sprintf("%v", all[0].(pulumi.ID))
@@ -54,8 +57,8 @@ func TestInfrastructure(t *testing.T) {
 				return nil
 			})
 		}
-		
-		for _, res := range(infra.DdbTables) {
+
+		for _, res := range infra.DdbTables {
 			pulumi.All(res.ID()).ApplyT(func(all []interface{}) error {
 				id := fmt.Sprintf("%v", all[0].(pulumi.ID))
 				assert.Equal(
@@ -70,8 +73,8 @@ func TestInfrastructure(t *testing.T) {
 				return nil
 			})
 		}
-		
-		for _, res := range(infra.Lambdas) {
+
+		for _, res := range infra.Lambdas {
 			pulumi.All(res.ID()).ApplyT(func(all []interface{}) error {
 				id := fmt.Sprintf("%v", all[0].(pulumi.ID))
 				assert.Equal(
@@ -86,7 +89,7 @@ func TestInfrastructure(t *testing.T) {
 				return nil
 			})
 		}
-		
+
 		// There seem to be complications validating the names of resources
 		// created using the 'pulumi-aws-apigateway' Crosswalk module.
 		//
@@ -105,8 +108,8 @@ func TestInfrastructure(t *testing.T) {
 		// 		return nil
 		// 	})
 		// }
-		
-		for _, res := range(infra.S3Buckets) {
+
+		for _, res := range infra.S3Buckets {
 			pulumi.All(res.ID()).ApplyT(func(all []interface{}) error {
 				id := fmt.Sprintf("%v", all[0].(pulumi.ID))
 				assert.Equal(
@@ -121,8 +124,8 @@ func TestInfrastructure(t *testing.T) {
 				return nil
 			})
 		}
-		
-		for _, res := range(infra.S3Objects) {
+
+		for _, res := range infra.S3Objects {
 			pulumi.All(res.ID()).ApplyT(func(all []interface{}) error {
 				id := fmt.Sprintf("%v", all[0].(pulumi.ID))
 				assert.Equal(
@@ -138,10 +141,11 @@ func TestInfrastructure(t *testing.T) {
 			})
 		}
 		wg.Done()
+		fmt.Printf("\tCOMPLETE\n")
 
-        // TODO(check 2): Check the count of resources created.
-		
-        // TODO(check 3): All resources must have an owner tag.
+		// TODO(check 2): Check the count of resources created.
+
+		// TODO(check 3): All resources must have an owner tag.
 
 		// Test if the service has tags and a name tag.
 		// pulumi.All(infra.URN(), infra.server.Tags).ApplyT(func(all []interface{}) error {

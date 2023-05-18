@@ -77,13 +77,27 @@ You can also edit the `iac/Pulumi.dev.yaml` file directly to include the followi
 # Repo Structure
 The repository contains two key folders:
 - `assets`: this folder contains all of the animal facts and images, and the code for the Lambda functions that will service API requests hitting the API Gateway.
+  - `animals`: this folder contains 
 - `iac`: this folder contains all of the Pulumi-specific code for deploying, and testing, the AWS resouces.
 
 ## Folder Structure Diagram
 ```
 	pulumi-demo-go
+	│
 	├─  assets
-	├─	iac
+	│   │
+	│   ├─  animals
+	│   │   ├─  otter
+	│   │   ├─  platypus
+	│   │   └─  README.md
+	│   │
+	│   └─  lambda
+	│       ├─  facts
+	│       ├─  images
+	│       ├─  pat
+	│       └─  README.md
+	│
+	├─  iac
 	└─  README.md
 ```
 
@@ -98,22 +112,25 @@ You can add your own animal by creating a folder under the `assets/animals` fold
 
 # Deployed Infrastructure
 This project will deploy the following resources into the target AWS account:
-- `1x` DynamoDB Table
+- `2x` DynamoDB Tables (Facts & Pats)
 	- `Several` DynamoDB Table Items, depending on which animal you're deploying, and how many facts are in the `assets/animals/<animal>/facts.txt` file (each line is a fact)
 - `1x` S3 Bucket and attached bucket policy to allow public access to the bucket and contained S3 objects
 	- `Several` S3 Objects, depending on what animal you're deploying, and how many images are in the `assets/animals/<animal>/images` folder (each file, other than the `metadata.json` file is an image)
-- `2x` Lambda Functions, one for the `Facts` endpoint, and one for the `Images` endpoint
-- `2x` IAM Roles, one for each of the Lambda Functions, and attached IAM Role Policies to allow required permissions (get S3 Objects or DynamoDB Table items)
+- `3x` Lambda Functions, one for the each endpoint:
+	1. `Facts`
+	2. `Images`
+	3. `Pats`
+- `3x` IAM Roles, one for each of the Lambda Functions, and attached IAM Role Policies to allow required permissions (interacting with S3 Objects or DynamoDB Table items)
 - `Several` API Gateway resources
 	- `1x` API Gateway Deployment
 	- `1x` API Gateway RestAPI
 	- `1x` API Gateway Stage
 
 # Utilisation of `Makefile`s
-There are several `Makefile`s as part of this project:
-- Each Lambda function has a `Makefile` that compiles the Go code and compresses it as a `.zip` file, ready to be deployed.
-- The Pulumi code has a `Makefile` for `deploy`, `destroy` and `test` purposes.
-  - Executing `make` from the `iac` folder will run the `integration` and `unit` tests before executing a `pulumi up` command.
+There are two `Makefile`s as part of this project:
+1. There is a single `Makefile` that compiles the Go code for all Lambda functions and compresses the compiled artefact as a `.zip` file, ready to be deployed. The compiled code, and resulting `.zip` file will be stored in a `bin` folder under each Lambda function's folder.
+2. The Pulumi code has a `Makefile` for `deploy`, `destroy` and `test` purposes.
+  - Executing `make` from the `iac` folder will run the `integration` and `unit` tests before executing the `pulumi up` command.
 
 # Testing
 Using a combination of `go test` and Pulumi's testing framework, I have implemented **unit** and **integration** testing. **Property** testing is also possible, but has not been implemented at this stage.
@@ -154,6 +171,8 @@ If you've followed the instrutions above, you should be ready to deploy! To test
 ```bash
 make
 ```
+> **Info**
+> Failing tests when deploying in this manner will exit the deployment process.
 
 Alternatively, you can execute the following `pulumi` command:
 ```bash
@@ -166,30 +185,34 @@ Previewing update (dev)
 
 View in Browser (Ctrl+O): <your preview URL will be here>
 
-     Type                               Name                                   Plan       
+     Type                               Name                                   Plan    
  +   pulumi:pulumi:Stack                pulumi-demo-go-dev                     create     
  +   ├─ aws:dynamodb:Table              xaas-ddb-facts                         create     
- +   ├─ aws:dynamodb:TableItem          xaas-ddb-facts-X                       create     
+ +   ├─ aws:dynamodb:Table              xaas-ddb-pats                          create     
  +   ├─ <!-- THERE WILL BE MULTIPLE dynamodb:TableItem HERE FOR EACH ANIMAL FACT -->
  +   ├─ aws:iam:Role                    xaas-lambda-facts-exec-role            create     
  +   ├─ aws:iam:Role                    xaas-lambda-images-exec-role           create     
+ +   ├─ aws:iam:Role                    xaas-lambda-pats-exec-role             create     
  +   ├─ aws:iam:RolePolicy              xaas-lambda-facts-ddb-read-policy      create     
  +   ├─ aws:iam:RolePolicy              xaas-lambda-images-s3-read-policy      create     
+ +   ├─ aws:iam:RolePolicy              xaas-lambda-pats-ddb-read-policy       create     
  +   ├─ aws:iam:RolePolicyAttachment    xaas-lambda-facts-exec-role-cwpolicy   create     
  +   ├─ aws:iam:RolePolicyAttachment    xaas-lambda-images-exec-role-cwpolicy  create     
+ +   ├─ aws:iam:RolePolicyAttachment    xaas-lambda-pats-exec-role-cwpolicy    create     
  +   ├─ aws:lambda:Function             xaas-lambda-facts                      create     
+ +   ├─ aws:lambda:Function             xaas-lambda-images                     create     
+ +   ├─ aws:lambda:Function             xaas-lambda-pats                       create     
  +   ├─ aws:s3:Bucket                   xaas-s3-assets                         create     
- +   ├─ aws:s3:BucketObject             xaas-s3-assets-animalX.XXX             create     
- +   ├─ <!-- THERE WILL BE MULTIPLE s3:BucketObject HERE FOR EACH ANIMAL IMAGE -->   
+ +   ├─ <!-- THERE WILL BE MULTIPLE s3:BucketObject HERE FOR EACH ANIMAL IMAGE -->     
  +   ├─ aws:s3:BucketPolicy             xaas-assets-policy                     create     
  +   ├─ aws:s3:BucketPublicAccessBlock  xaas-s3-assets-publicaccess-allow      create     
- +   ├─ aws:lambda:Function             xaas-lambda-images                     create     
  +   └─ aws-apigateway:index:RestAPI    xaas-apigw                             create     
  +      ├─ aws:apigateway:RestApi       xaas-apigw                             create     
  +      ├─ aws:apigateway:Deployment    xaas-apigw                             create     
- +      ├─ aws:lambda:Permission        xaas-apigw-2a7be15d                    create     
+ +      ├─ aws:lambda:Permission        xaas-apigw-03e34b59                    create     
  +      ├─ aws:lambda:Permission        xaas-apigw-576bbc14                    create     
- +      └─ aws:apigateway:Stage         xaas-apigw                             create     
+ +      ├─ aws:lambda:Permission        xaas-apigw-2a7be15d                    create     
+ +      └─ aws:apigateway:Stage         xaas-apigw                             create 
 
 
 Outputs:
@@ -244,14 +267,18 @@ Resources:
 Duration: 1m12s
 ```
 
-## Validation
+## Endpoints/Validating the Solution
 You'll be able to query your APIs using the following endpoints:
 
 ### Facts
-
 To retrieve a random fact, query `<output_url>/facts` with a `GET`
 
 To retrieve a specific fact, query `<output_url>/facts?FactId=1` with a `GET`
 
 ### Images
 To retrieve a random image, query, `<output_url>/images` with a `GET`
+
+### PATs (Personal Access Tokens)
+To request a new PAT, query `<output_url>/pats` with a `POST`
+
+To delete a PAT, query `<output_url>/pats` with a `DELETE`, supplying your PAT as an `Authorization` header in the format `Bearer: <pat>`
