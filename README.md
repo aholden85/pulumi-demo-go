@@ -171,7 +171,7 @@ If you've followed the instrutions above, you should be ready to deploy! To test
 ```bash
 make
 ```
-> **Info**
+> **Note**
 > Failing tests when deploying in this manner will exit the deployment process.
 
 Alternatively, you can execute the following `pulumi` command:
