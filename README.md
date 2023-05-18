@@ -233,29 +233,33 @@ Select `yes` to deploy the infrastructure and take note of the output so you can
 
 ```
      Type                               Name                                   Status              
- +   pulumi:pulumi:Stack                pulumi-demo-go-dev                     created (67s)       
+ +   pulumi:pulumi:Stack                pulumi-demo-go-dev                     created (106s)      
  +   ├─ aws:dynamodb:Table              xaas-ddb-facts                         created (10s)       
- +   ├─ aws:dynamodb:TableItem          xaas-ddb-facts-X                       created (Xs)        
+ +   ├─ aws:dynamodb:Table              xaas-ddb-pats                          created (10s)       
  +   ├─ <!-- THERE WILL BE MULTIPLE dynamodb:TableItem HERE FOR EACH ANIMAL FACT -->
- +   ├─ aws:iam:Role                    xaas-lambda-facts-exec-role            created (2s)        
- +   ├─ aws:iam:Role                    xaas-lambda-images-exec-role           created (2s)        
+ +   ├─ aws:iam:Role                    xaas-lambda-facts-exec-role            created (3s)        
+ +   ├─ aws:iam:Role                    xaas-lambda-images-exec-role           created (3s)        
+ +   ├─ aws:iam:Role                    xaas-lambda-pats-exec-role             created (3s)        
  +   ├─ aws:iam:RolePolicy              xaas-lambda-facts-ddb-read-policy      created (1s)        
- +   ├─ aws:iam:RolePolicy              xaas-lambda-images-s3-read-policy      created (0.84s)     
+ +   ├─ aws:iam:RolePolicy              xaas-lambda-images-s3-read-policy      created (1s)        
+ +   ├─ aws:iam:RolePolicy              xaas-lambda-pats-ddb-read-policy       created (6s)        
  +   ├─ aws:iam:RolePolicyAttachment    xaas-lambda-facts-exec-role-cwpolicy   created (1s)        
  +   ├─ aws:iam:RolePolicyAttachment    xaas-lambda-images-exec-role-cwpolicy  created (1s)        
- +   ├─ aws:lambda:Function             xaas-lambda-images                     created (22s)       
+ +   ├─ aws:iam:RolePolicyAttachment    xaas-lambda-pats-exec-role-cwpolicy    created (1s)        
+ +   ├─ aws:lambda:Function             xaas-lambda-facts                      created (44s)       
+ +   ├─ aws:lambda:Function             xaas-lambda-images                     created (29s)       
+ +   ├─ aws:lambda:Function             xaas-lambda-pats                       created (61s)       
  +   ├─ aws:s3:Bucket                   xaas-s3-assets                         created (5s)        
- +   ├─ aws:s3:BucketObject             xaas-s3-assets-animalX.XXX             created (xs)    
  +   ├─ <!-- THERE WILL BE MULTIPLE s3:BucketObject HERE FOR EACH ANIMAL IMAGE -->   
- +   ├─ aws:s3:BucketPolicy             xaas-assets-policy                     created (0.93s)     
- +   ├─ aws:s3:BucketPublicAccessBlock  xaas-s3-assets-publicaccess-allow      created (1s)        
- +   ├─ aws:lambda:Function             xaas-lambda-facts                      created (30s)       
+ +   ├─ aws:s3:BucketPolicy             xaas-assets-policy                     created (1s)        
+ +   ├─ aws:s3:BucketPublicAccessBlock  xaas-s3-assets-publicaccess-allow      created (2s)        
  +   └─ aws-apigateway:index:RestAPI    xaas-apigw                             created (13s)       
  +      ├─ aws:apigateway:RestApi       xaas-apigw                             created (2s)        
  +      ├─ aws:apigateway:Deployment    xaas-apigw                             created (1s)        
- +      ├─ aws:lambda:Permission        xaas-apigw-576bbc14                    created (1s)        
  +      ├─ aws:lambda:Permission        xaas-apigw-2a7be15d                    created (1s)        
- +      └─ aws:apigateway:Stage         xaas-apigw                             created (0.97s)     
+ +      ├─ aws:lambda:Permission        xaas-apigw-576bbc14                    created (1s)        
+ +      ├─ aws:lambda:Permission        xaas-apigw-03e34b59                    created (1s)        
+ +      └─ aws:apigateway:Stage         xaas-apigw                             created (0.98s)   
 
 
 Outputs:
