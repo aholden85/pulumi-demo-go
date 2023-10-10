@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"os/exec"
 	"path"
@@ -553,7 +553,7 @@ func deployLambdaFunction(
 
 func addFolderContentsToS3(ctx *pulumi.Context, directory string, s3Bucket *s3.Bucket) error {
 	// Get a list of all the files in the target folder
-	files, err := ioutil.ReadDir(directory)
+	files, err := os.ReadDir(directory)
 	if err != nil {
 		return err
 	}
@@ -571,7 +571,7 @@ func addFolderContentsToS3(ctx *pulumi.Context, directory string, s3Bucket *s3.B
 		// Ensure that the metadata file is closed at the end of the function
 		defer metadataJson.Close()
 
-		byteValue, _ := ioutil.ReadAll(metadataJson)
+		byteValue, _ := io.ReadAll(metadataJson)
 		err = json.Unmarshal(byteValue, &metadata)
 		if err != nil {
 			return err
@@ -631,7 +631,7 @@ func addTextContentsToDdb(ctx *pulumi.Context, filePath string, ddbTable *dynamo
 	// Init a counter for the fact ID field.
 	factId := 0
 
-	//
+	// For each line in the text file...
 	for scanner.Scan() {
 		fact := Fact{
 			FactId: factId,
@@ -676,8 +676,8 @@ func createInfrastructure(ctx *pulumi.Context) (*Infrastructure, error) {
 
 	// Create each of the Lambda functions and required resources
 	lambdaFunctions := make([]LambdaInfra, 0)
-	for lambdaNameNEW := range getLambdaDetails() {
-		funct := getLambdaDetails()[lambdaNameNEW]
+	for lambdaName := range getLambdaDetails() {
+		funct := getLambdaDetails()[lambdaName]
 		functionInfra, err := funct(ctx)
 		if err != nil {
 			return nil, err

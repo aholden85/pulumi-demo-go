@@ -5,7 +5,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -147,7 +146,7 @@ func removeAssets() {
 
 func getConfigVars() PulumiConfig {
 	// Read the file
-	data, err := ioutil.ReadFile(pulumiConfigFileName)
+	data, err := os.ReadFile(pulumiConfigFileName)
 	if err != nil {
 		printLogMsg(
 			"Error",

@@ -5,6 +5,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"sync"
 	"testing"
@@ -29,6 +30,9 @@ func (mocks) Call(args pulumi.MockCallArgs) (resource.PropertyMap, error) {
 
 // Applying unit tests.
 func TestInfrastructure(t *testing.T) {
+	// This is required because the tests do not properly ingest the Pulumi config file.
+	os.Setenv("PULUMI_CONFIG", "{ \"project:animal\": \"platypus\" }")
+	
 	err := pulumi.RunErr(func(ctx *pulumi.Context) error {
 		fmt.Printf("Executing ~UNIT~ tests...\n")
 		infra, err := createInfrastructure(ctx)
