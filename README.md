@@ -77,7 +77,8 @@ You can also edit the `iac/Pulumi.dev.yaml` file directly to include the followi
 # Repo Structure
 The repository contains two key folders:
 - `assets`: this folder contains all of the animal facts and images, and the code for the Lambda functions that will service API requests hitting the API Gateway.
-  - `animals`: this folder contains 
+  - `animals`: this folder contains all of the animal facts and images.
+  - `lambda`: this folder contains the code for the Lambda functions that will service API requests hitting the API Gateway.
 - `iac`: this folder contains all of the Pulumi-specific code for deploying, and testing, the AWS resouces.
 
 ## Folder Structure Diagram
@@ -283,6 +284,9 @@ To retrieve a specific fact, query `<output_url>/facts?FactId=1` with a `GET`
 To retrieve a random image, query, `<output_url>/images` with a `GET`
 
 ### PATs (Personal Access Tokens)
+> **Warning**
+> The PAT endpoint is curently not fully functional and only partially built. The idea here is to provide a bespoke PAT system for the API endpoints.
+
 To request a new PAT, query `<output_url>/pats` with a `POST`
 
 To delete a PAT, query `<output_url>/pats` with a `DELETE`, supplying your PAT as an `Authorization` header in the format `Bearer: <pat>`
